@@ -9,11 +9,20 @@ namespace AssetManager
 {
     public class Asset
     {
-        public string šifra { get; set; }
-        public string naziv { get; set; }
-        public string mjesto_troška { get; set; }
-        public DateTime datum_aktivacije { get; set; }
-        public string smještaj { get; set; }
+        public string šifra { get; }
+        public string naziv { get; }
+        public string mjesto_troška { get; }
+        public DateTime datum_aktivacije { get; }
+        public string smještaj { get; }
+
+        public Asset(string šifra, string naziv, string mjesto_troška, DateTime datum_aktivacije, string smještaj)
+        {
+            this.šifra = šifra;
+            this.naziv = naziv;
+            this.mjesto_troška = mjesto_troška;
+            this.datum_aktivacije = datum_aktivacije;
+            this.smještaj = smještaj;
+        }
     }
 
     class Program
@@ -69,36 +78,15 @@ namespace AssetManager
             }
         }
 
-        static void ProcessLine(string[] parts, string invalidAssetsFile, Dictionary<string, Asset> assets)
+        static void ProcessLine(string[] parts, StreamWriter invalidAssetsWriter, Dictionary<string, Asset> assets)
         {
-            if (parts.Length != 5)
+            if (parts.Length != 5 || !DateTime.TryParseExact(parts[3], "dd.MM.yyyy", null, DateTimeStyles.None, out DateTime date) || assets.ContainsKey(parts[0]))
             {
-                File.AppendAllText(invalidAssetsFile, string.Join(';', parts) + Environment.NewLine);
+                invalidAssetsWriter.WriteLine(string.Join(';', parts));
                 return;
             }
 
-            if (!DateTime.TryParseExact(parts[3], "dd.MM.yyyy", null, DateTimeStyles.None, out DateTime date))
-            {
-                File.AppendAllText(invalidAssetsFile, string.Join(';', parts) + Environment.NewLine);
-                return;
-            }
-
-            string code = parts[0];
-
-            if (assets.ContainsKey(code))
-            {
-                File.AppendAllText(invalidAssetsFile, string.Join(';', parts) + Environment.NewLine);
-                return;
-            }
-
-            assets[code] = new Asset
-            {
-                šifra = code,
-                naziv = parts[1],
-                mjesto_troška = parts[2],
-                datum_aktivacije = date,
-                smještaj = parts[4]
-            };
+            assets[parts[0]] = new Asset(parts[0], parts[1], parts[2], date, parts[4]);
         }
     }
 }
